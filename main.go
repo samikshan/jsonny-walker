@@ -1,8 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"strconv"
+	"log"
 )
 
 var (
@@ -37,46 +38,23 @@ var (
 	JSONData map[string]interface{}
 )
 
-// data = {“name” : “Joe”, “address” : {“street” : “montgomery st”, “number”: 101, “city”: “new york”, “state”: “ny”}}
-// parent = {"name": {"Joe": 3, "Evan": 1}, ...}
-func walkJSON(data map[string]interface{}, parent map[string]interface{}) map[string]interface{} {
-	for k, v := range data { // qualifications,  [BS, MS]
-		// fmt.Println(k, v)
-		switch v.(type) {
-		case []interface{}:
-			if _, ok := parent[k]; !ok {
-				parent[k] = make([]interface{}, 0)
-			}
-
-			arrMap := make(map[string]interface{}, 0)
-			for i, val := range v.([]interface{}) {
-				idxStr := strconv.Itoa(i)
-				arrMap[idxStr] = val
-			}
-
-			values := parent[k].(map[string]interface{})
-			parent[k] = walkJSON(arrMap, values)
-		case map[string]interface{}:
-			if _, ok := parent[k]; !ok { // parent[address] => !ok
-				parent[k] = make(map[string]interface{}, 0) // parent[address] = {}
-			}
-
-			values := parent[k].(map[string]interface{})
-			parent[k] = walkJSON(v.(map[string]interface{}), values)
-		default:
-			vStr := fmt.Sprintf("%v", v)
-			if _, ok := parent[k]; !ok {
-				parent[k] = make(map[string]int, 0)
-			}
-			if _, ok := parent[k].(map[string]int)[vStr]; !ok {
-				parent[k].(map[string]int)[vStr]++
-			}
-		}
+func main() {
+	JSONData = make(map[string]interface{}, 0)
+	testJSONData := [][]byte{
+		[]byte(`{"name" : "Joe", "address" : {"street" : "montgomery st", "number": 101, "city": "new york", "state": "ny"}}`),
+		[]byte(`{"name" : "Evan", "address" : {"street" : "Santa Theresa st", "number": 201, "city": "sfo", "state": "ca"}}`),
+		[]byte(`{"name" : "Joe", "qualifications" : ["BS", "MS"]}`),
 	}
 
-	return parent
-}
+	for _, d := range testJSONData {
+		var data map[string]interface{}
+		if err := json.Unmarshal(d, &data); err != nil {
+			log.Fatalln("failed to unmarshal json data: ", err.Error())
+		}
 
-func main() {
+		walkJSON(data, JSONData)
+	}
+
+	fmt.Println(JSONData)
 
 }
