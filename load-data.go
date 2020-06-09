@@ -6,13 +6,16 @@ import (
 )
 
 func walkJSON(data map[string]interface{}, parent map[string]interface{}) map[string]interface{} {
-	for k, v := range data { // qualifications,  [BS, MS]
-		// fmt.Println(k, v)
+	for k, v := range data {
 		switch v.(type) {
 		case []interface{}:
 			if _, ok := parent[k]; !ok {
 				parent[k] = make(map[string]interface{}, 0)
+				parent[k].(map[string]interface{})["freq"] = 0
+				parent[k].(map[string]interface{})["components"] = make(map[string]interface{}, 0)
 			}
+
+			parent[k].(map[string]interface{})["freq"] = parent[k].(map[string]interface{})["freq"].(int) + 1
 
 			arrMap := make(map[string]interface{}, 0)
 			for i, val := range v.([]interface{}) {
@@ -20,24 +23,35 @@ func walkJSON(data map[string]interface{}, parent map[string]interface{}) map[st
 				arrMap[idxStr] = val
 			}
 
-			values := parent[k].(map[string]interface{})
-			parent[k] = walkJSON(arrMap, values)
+			values := parent[k].(map[string]interface{})["components"].(map[string]interface{})
+			parent[k].(map[string]interface{})["components"] = walkJSON(arrMap, values)
+
 		case map[string]interface{}:
-			if _, ok := parent[k]; !ok { // parent[address] => !ok
-				parent[k] = make(map[string]interface{}, 0) // parent[address] = {}
+			if _, ok := parent[k]; !ok {
+				parent[k] = make(map[string]interface{}, 0)
+				parent[k].(map[string]interface{})["freq"] = 0
+				parent[k].(map[string]interface{})["components"] = make(map[string]interface{}, 0)
 			}
 
-			values := parent[k].(map[string]interface{})
-			parent[k] = walkJSON(v.(map[string]interface{}), values)
+			parent[k].(map[string]interface{})["freq"] = parent[k].(map[string]interface{})["freq"].(int) + 1
+
+			values := parent[k].(map[string]interface{})["components"].(map[string]interface{})
+			parent[k].(map[string]interface{})["components"] = walkJSON(v.(map[string]interface{}), values)
+
 		default:
 			vStr := fmt.Sprintf("%v", v)
 			if _, ok := parent[k]; !ok {
-				parent[k] = make(map[string]int, 0)
+				parent[k] = make(map[string]interface{}, 0)
+				parent[k].(map[string]interface{})["freq"] = 0
+				parent[k].(map[string]interface{})["components"] = make(map[string]int, 0)
 			}
-			if _, ok := parent[k].(map[string]int)[vStr]; !ok {
-				parent[k].(map[string]int)[vStr] = 0
+
+			parent[k].(map[string]interface{})["freq"] = parent[k].(map[string]interface{})["freq"].(int) + 1
+
+			if _, ok := parent[k].(map[string]interface{})["components"].(map[string]int)[vStr]; !ok {
+				parent[k].(map[string]interface{})["components"].(map[string]int)[vStr] = 0
 			}
-			parent[k].(map[string]int)[vStr]++
+			parent[k].(map[string]interface{})["components"].(map[string]int)[vStr]++
 		}
 	}
 
