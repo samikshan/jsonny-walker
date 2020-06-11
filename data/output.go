@@ -1,17 +1,23 @@
-package main
+package data
 
 import (
 	"container/heap"
 	"log"
 )
 
-type leaf struct {
-	val      interface{}
-	fraction float64
+type PathData struct {
+	Path        string
+	OccFraction float64
+	TopKLeaves  []*PathLeaf
 }
 
-func getKLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq, K int) []*leaf {
-	topKLeaves := make([]*leaf, 0)
+type PathLeaf struct {
+	Val      interface{}
+	Fraction float64
+}
+
+func getKLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq, K int) []*PathLeaf {
+	topKLeaves := make([]*PathLeaf, 0)
 	topKStack := make([]*Leaf, 0)
 
 	heapLen := Paths[parentPath].Len()
@@ -34,12 +40,12 @@ func getKLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq, K in
 		log.Println("Top count: ", top.Count)
 		log.Println("Parent freq: ", parentFreq)
 
-		l := leaf{
-			val:      top.Value,
-			fraction: float64(top.Count) / float64(parentFreq),
+		l := PathLeaf{
+			Val:      top.Value,
+			Fraction: float64(top.Count) / float64(parentFreq),
 		}
 
-		log.Printf("Adding leaf element. Value: %v, fraction: %f", l.val, l.fraction)
+		log.Printf("Adding leaf element. Value: %v, fraction: %f", l.Val, l.Fraction)
 
 		topKLeaves = append(topKLeaves, &l)
 	}
@@ -47,8 +53,8 @@ func getKLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq, K in
 	return topKLeaves
 }
 
-func getPaths(K int, Threshold float64) []interface{} {
-	paths := make([]interface{}, 0)
+func GetPaths(K int, Threshold float64) []*PathData {
+	paths := make([]*PathData, 0)
 
 	nObjects := JSONData["nObjects"].(int)
 	if nObjects == 0 {
@@ -57,17 +63,18 @@ func getPaths(K int, Threshold float64) []interface{} {
 
 	var traverseData func(parent map[string]interface{}, parentPath string, parentFreq int)
 	traverseData = func(parent map[string]interface{}, parentPath string, parentFreq int) {
-		leavesData := make([]*leaf, 0)
+		leavesData := make([]*PathLeaf, 0)
 		for k, v := range parent {
 			prefix := parentPath + k + "/"
-			data := make([]interface{}, 0)
-			data = append(data, prefix)
+			data := &PathData{
+				Path: prefix,
+			}
 
 			freq := v.(map[string]interface{})["freq"].(int)
 			if occFraction := float64(freq) / float64(nObjects); occFraction < Threshold {
 				continue
 			} else {
-				data = append(data, occFraction)
+				data.OccFraction = occFraction
 			}
 
 			components := v.(map[string]interface{})["components"]
@@ -79,12 +86,13 @@ func getPaths(K int, Threshold float64) []interface{} {
 				leavesData = getKLeavesData(components.(map[string]*Leaf), prefix, freq, K)
 			}
 
-			data = append(data, leavesData)
+			data.TopKLeaves = leavesData
 
 			paths = append(paths, data)
 		}
 	}
 
+	// recursively populate paths
 	traverseData(JSONData["components"].(map[string]interface{}), "", -1)
 
 	return paths

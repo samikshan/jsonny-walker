@@ -1,12 +1,21 @@
-package main
+package data
 
 import (
 	"container/heap"
 	"fmt"
+	"log"
 	"strconv"
 )
 
-func walkJSON(data, parent map[string]interface{}, parentPath string) map[string]interface{} {
+var (
+	JSONData map[string]interface{}
+	Paths    map[string]*LeafHeap
+)
+
+func ProcessJSONInput(data, parent map[string]interface{}, parentPath string) map[string]interface{} {
+	log.Println(data)
+	log.Println(parent)
+
 	for k, v := range data {
 		switch v.(type) {
 		case []interface{}:
@@ -26,7 +35,7 @@ func walkJSON(data, parent map[string]interface{}, parentPath string) map[string
 
 			values := parent[k].(map[string]interface{})["components"].(map[string]interface{})
 			prefix := parentPath + k + "/"
-			parent[k].(map[string]interface{})["components"] = walkJSON(arrMap, values, prefix)
+			parent[k].(map[string]interface{})["components"] = ProcessJSONInput(arrMap, values, prefix)
 
 		case map[string]interface{}:
 			if _, ok := parent[k]; !ok {
@@ -39,7 +48,7 @@ func walkJSON(data, parent map[string]interface{}, parentPath string) map[string
 
 			values := parent[k].(map[string]interface{})["components"].(map[string]interface{})
 			prefix := parentPath + k + "/"
-			parent[k].(map[string]interface{})["components"] = walkJSON(v.(map[string]interface{}), values, prefix)
+			parent[k].(map[string]interface{})["components"] = ProcessJSONInput(v.(map[string]interface{}), values, prefix)
 
 		default:
 			prefix := parentPath + k + "/"
