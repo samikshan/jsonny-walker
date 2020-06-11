@@ -15,8 +15,8 @@ var (
 				"name": {
 					"freq": 4,
 					"components": {
-						"Joe": 3,
-						"Evan": 1,
+						"Joe": &Leaf{Count: 3, Index: 0},
+						"Evan": &Leaf{Count: 1, Index: 1},
 					},
 				},
 				"address": {
@@ -57,14 +57,18 @@ var (
 			}
 		}
 	*/
-	JSONData map[string]interface{}
-	Paths    map[string]*LeafHeap
-	K        int
+	JSONData  map[string]interface{}
+	Paths     map[string]*LeafHeap
+	K         int
+	Threshold float64
 )
 
 func main() {
 	fmt.Println("Input K (#top frequent leaf elements to print): ")
 	fmt.Scanln(&K)
+
+	fmt.Println("Input Threshold (paths with occurance fraction < threshold are ignored):")
+	fmt.Scanln(&Threshold)
 
 	JSONData = make(map[string]interface{}, 0)
 	JSONData["nObjects"] = 0
@@ -88,6 +92,9 @@ func main() {
 		JSONData["components"] = walkJSON(data, JSONData["components"].(map[string]interface{}), "")
 	}
 
-	fmt.Println(JSONData)
+	log.Println(JSONData)
 
+	log.Println(Paths)
+
+	log.Println(getPaths())
 }

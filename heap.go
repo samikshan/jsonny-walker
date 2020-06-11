@@ -5,6 +5,7 @@ import (
 )
 
 type Leaf struct {
+	Value interface{}
 	Count int
 	Index int
 }
@@ -16,16 +17,16 @@ func (h LeafHeap) Len() int { return len(h) }
 func (h LeafHeap) Less(i, j int) bool { return h[i].Count < h[j].Count }
 
 func (h LeafHeap) Swap(i, j int) {
-	h[i].Index = j
-	h[j].Index = i
 	h[i], h[j] = h[j], h[i]
+	h[i].Index = i
+	h[j].Index = j
 }
 
 func (h *LeafHeap) Push(v interface{}) {
-	n := h.Len()
-	elem := v.(Leaf)
+	n := len(*h)
+	elem := v.(*Leaf)
 	elem.Index = n
-	*h = append(*h, &elem)
+	*h = append(*h, elem)
 }
 
 func (h *LeafHeap) Pop() interface{} {
