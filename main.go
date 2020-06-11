@@ -57,13 +57,15 @@ var (
 			}
 		}
 	*/
-	JSONData  map[string]interface{}
-	Paths     map[string]*LeafHeap
-	K         int
-	Threshold float64
+	JSONData map[string]interface{}
+	Paths    map[string]*LeafHeap
 )
 
 func main() {
+	var (
+		K         int
+		Threshold float64
+	)
 	fmt.Println("Input K (#top frequent leaf elements to print): ")
 	fmt.Scanln(&K)
 
@@ -96,5 +98,5 @@ func main() {
 
 	log.Println(Paths)
 
-	log.Println(getPaths())
+	log.Println(getPaths(K, Threshold))
 }

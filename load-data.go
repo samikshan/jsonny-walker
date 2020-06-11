@@ -55,24 +55,20 @@ func walkJSON(data, parent map[string]interface{}, parentPath string) map[string
 			}
 
 			parent[k].(map[string]interface{})["freq"] = parent[k].(map[string]interface{})["freq"].(int) + 1
-
+			var leaf *Leaf
 			if _, ok := parent[k].(map[string]interface{})["components"].(map[string]*Leaf)[vStr]; !ok {
 				// new leaf.. push to min heap
-				leaf := Leaf{
+				leaf = &Leaf{
 					Count: 1,
 					Index: -1,
 					Value: vStr,
 				}
 
 				heapLen := Paths[prefix].Len()
-				if heapLen < K {
-					leaf.Index = heapLen
-					heap.Push(Paths[prefix], &leaf)
-				}
-				parent[k].(map[string]interface{})["components"].(map[string]*Leaf)[vStr] = &leaf
-
+				leaf.Index = heapLen
+				heap.Push(Paths[prefix], leaf)
 			} else {
-				leaf := parent[k].(map[string]interface{})["components"].(map[string]*Leaf)[vStr]
+				leaf = parent[k].(map[string]interface{})["components"].(map[string]*Leaf)[vStr]
 				leaf.Count++
 
 				fmt.Println(vStr, leaf.Count)
@@ -80,22 +76,13 @@ func walkJSON(data, parent map[string]interface{}, parentPath string) map[string
 				if leaf.Index == -1 {
 					// leaf element not present in heap
 					heapLen := Paths[prefix].Len()
-					if heapLen < K {
-						leaf.Index = heapLen
-						heap.Push(Paths[prefix], *leaf)
-					} else {
-						popped := heap.Pop(Paths[prefix]).(*Leaf)
-						if popped.Count < leaf.Count {
-							heap.Push(Paths[prefix], *leaf)
-						} else {
-							heap.Push(Paths[prefix], *popped)
-						}
-					}
+					leaf.Index = heapLen
+					heap.Push(Paths[prefix], *leaf)
 				} else {
 					Paths[prefix].Update(leaf)
 				}
-				parent[k].(map[string]interface{})["components"].(map[string]*Leaf)[vStr] = leaf
 			}
+			parent[k].(map[string]interface{})["components"].(map[string]*Leaf)[vStr] = leaf
 		}
 	}
 

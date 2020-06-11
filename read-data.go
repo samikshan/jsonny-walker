@@ -10,17 +10,19 @@ type leaf struct {
 	fraction float64
 }
 
-func getLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq int) []*leaf {
+func getKLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq, K int) []*leaf {
 	topKLeaves := make([]*leaf, 0)
 	topKStack := make([]*Leaf, 0)
 
-	for Paths[parentPath].Len() > 0 {
+	heapLen := Paths[parentPath].Len()
+	if heapLen < K {
+		K = heapLen
+	}
+	for i := 0; i < K; i++ {
 		popped := heap.Pop(Paths[parentPath]).(*Leaf)
 		log.Println("Popped: ", popped.Count, popped.Value)
 		topKStack = append(topKStack, popped)
 	}
-
-	// fmt.Println(topKStack)
 
 	for len(topKStack) > 0 {
 		n := len(topKStack)
@@ -45,7 +47,7 @@ func getLeavesData(leaves map[string]*Leaf, parentPath string, parentFreq int) [
 	return topKLeaves
 }
 
-func getPaths() []interface{} {
+func getPaths(K int, Threshold float64) []interface{} {
 	paths := make([]interface{}, 0)
 
 	nObjects := JSONData["nObjects"].(int)
@@ -57,9 +59,6 @@ func getPaths() []interface{} {
 	traverseData = func(parent map[string]interface{}, parentPath string, parentFreq int) {
 		leavesData := make([]*leaf, 0)
 		for k, v := range parent {
-			// fmt.Println(k, v)
-			// switch v.(type) {
-			// case map[string]interface{}:
 			prefix := parentPath + k + "/"
 			data := make([]interface{}, 0)
 			data = append(data, prefix)
@@ -75,10 +74,9 @@ func getPaths() []interface{} {
 
 			switch components.(type) {
 			case map[string]interface{}:
-				// prefix += "/"
 				traverseData(v.(map[string]interface{})["components"].(map[string]interface{}), prefix, freq)
 			case map[string]*Leaf:
-				leavesData = getLeavesData(components.(map[string]*Leaf), prefix, freq)
+				leavesData = getKLeavesData(components.(map[string]*Leaf), prefix, freq, K)
 			}
 
 			data = append(data, leavesData)
@@ -87,13 +85,7 @@ func getPaths() []interface{} {
 		}
 	}
 
-	rootComponents := JSONData["components"]
-	switch rootComponents.(type) {
-	case map[string]interface{}:
-		traverseData(JSONData["components"].(map[string]interface{}), "", -1)
-	case *Leaf:
-		// process leaves
-	}
+	traverseData(JSONData["components"].(map[string]interface{}), "", -1)
 
 	return paths
 }

@@ -14,7 +14,7 @@ type LeafHeap []*Leaf
 
 func (h LeafHeap) Len() int { return len(h) }
 
-func (h LeafHeap) Less(i, j int) bool { return h[i].Count < h[j].Count }
+func (h LeafHeap) Less(i, j int) bool { return h[i].Count > h[j].Count }
 
 func (h LeafHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
